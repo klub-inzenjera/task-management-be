@@ -1,0 +1,46 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env
+.venv/
+
+# Dependency directories
+pip-wheel-metadata/
+pip-log.txt
+
+# IDE and editor files
+.vscode/
+.idea/
+*.iml
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Logs and temp files
+logs/
+*.log
+*.tmp
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Database files
+*.sqlite3
+*.db
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+
+# Uvicorn reload files
+*.pid
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
