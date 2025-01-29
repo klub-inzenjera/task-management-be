@@ -1,6 +1,6 @@
 # task-management-be
 
-## Dependencies installation
+## Project Setup
 ```bash
   python -m venv venv
   source venv/bin/activate
