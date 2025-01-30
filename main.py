@@ -18,11 +18,25 @@ class TaskDB(Base):
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
 
+class EpicDB(Base):
+    __tablename__ = "epics"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True, nullable=False)
+    description = Column(String, nullable=False)
+
 # Create the database tables
 Base.metadata.create_all(bind=engine)
 
 # Pydantic model
 class Task(BaseModel):
+    id: int
+    name: str
+    description: str
+
+    class Config:
+        from_attributes = True
+
+class Epic(BaseModel):
     id: int
     name: str
     description: str
@@ -87,4 +101,44 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.commit()
 
 #Epics
+
+@app.get("/epics", response_model=List[Epic], status_code=200)
+def get_epics(db: Session = Depends(get_db)):
+    return db.query(EpicDB).all()
+
+@app.get("/epics/{epic_id}", response_model=Epic, status_code=200)
+def get_epic(epic_id: int, db: Session = Depends(get_db)):
+    epic = db.query(EpicDB).filter(EpicDB.id == epic_id).first()
+    if not epic:
+        raise HTTPException(status_code=404, detail="Epic not found")
+    return epic
+
+@app.post("/epics", response_model=Epic, status_code=201)
+def create_epic(epic: Epic, db: Session = Depends(get_db)):
+    if db.query(EpicDB).filter(EpicDB.id == epic.id).first():
+        raise HTTPException(status_code=400, detail="Epic ID already exists")
+    new_epic = EpicDB(id=epic.id, name=epic.name, description=epic.description)
+    db.add(new_epic)
+    db.commit()
+    db.refresh(new_epic)
+    return new_epic
+
+@app.put("/epics/{epic_id}", response_model=Epic, status_code=200)
+def update_epic(epic_id: int, updated_epic: Epic, db: Session = Depends(get_db)):
+    epic = db.query(EpicDB).filter(EpicDB.id == epic_id).first()
+    if not epic:
+        raise HTTPException(status_code=404, detail="Epic not found")
+    epic.name = updated_epic.name
+    epic.description = updated_epic.description
+    db.commit()
+    db.refresh(epic)
+    return epic
+
+@app.delete("/epics/{epic_id}", status_code=204)
+def delete_epic(epic_id: int, db: Session = Depends(get_db)):
+    epic = db.query(EpicDB).filter(EpicDB.id == epic_id).first()
+    if not epic:
+        raise HTTPException(status_code=404, detail="Epic not found")
+    db.delete(epic)
+    db.commit()
 
