@@ -12,53 +12,18 @@
   uvicorn main:app --reload
 ```
 
-
-
-## Basic Git Commands
-
-### Initializing and Cloning
-```bash
-  git init  # Initialize a new Git repository
-  git clone <repo_url>  # Clone an existing repository
+## Git commands
 ```
-
-### Staging and Committing Changes
-```bash
-  git status  # Check the status of your files
-  git add <file>  # Stage a specific file
-  git add .  # Stage all changes
-  git commit -m "Your commit message"  # Commit staged changes
-```
-
-### Working with Branches
-```bash
-  git branch  # List all branches
-  git branch <branch_name>  # Create a new branch
-  git checkout <branch_name>  # Switch to a branch
-  git checkout -b <branch_name>  # Create and switch to a new branch
-```
-
-### Pushing and Pulling Changes
-```bash
-  git push origin <branch_name>  # Push changes to remote repository
-  git pull origin <branch_name>  # Pull latest changes from remote
-```
-
-### Merging and Rebasing
-```bash
-  git merge <branch_name>  # Merge a branch into the current branch
-  git rebase <branch_name>  # Rebase the current branch onto another
-```
-
-### Undoing Changes
-```bash
-  git reset --soft HEAD~1  # Undo last commit but keep changes staged
-  git reset --hard HEAD~1  # Undo last commit and discard changes
-  git revert <commit_hash>  # Create a new commit that undoes a previous one
-```
-
-### Checking History
-```bash
-  git log  # View commit history
-  git log --oneline --graph  # View a simplified commit history
-```
+git init    --   Inicijalizuje novi Git repozitorijum u trenutnom direktorijumu
+git add <ime_fajla>  
+git commit -m "Poruka"
+git push
+git clone <repo_URL>
+git pull origin <branch>  --   Preuzima najnovije promene iz udaljenog repozitorijuma i spaja ih sa lokalnim
+git branch  --  Prikazuje listu svih grana u repozitorijumu
+git branch <ime_grane>  --  Kreira novu granu
+git switch -c <ime_grane>  --  Kreira novu granu i odmah se prebacuje na nju
+git log --graph --all --pretty="%x09 %C(Yellow)%h  %C(reset)%ad (%C(Green)%cr%C(reset)) %x09 %C(Cyan)%an:%Cred%d %C(reset)%s" --date=short  --  Prikazuje istorijat commit-ova u repozitorijumu.
+git merge <ime_grane>  --  Spaja promene iz određene grane u trenutnu granu
+git reset --hard <commit_id>  --  Vraća repozitorijum na određeni commit i briše sve naknadne promene
+git remote -v  --  Prikazuje listu udaljenih repozitorijuma povezanih sa lokalnim
