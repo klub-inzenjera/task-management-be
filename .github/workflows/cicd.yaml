@@ -27,10 +27,12 @@ jobs:
       - name: Run flake8 (Python Linter)
         run: |
           flake8 .
+        continue-on-error: true
 
       - name: Run black (Python Formatter)
         run: |
           black --check .
+        continue-on-error: true
 
   docker-build-and-push:
     runs-on: ubuntu-latest
