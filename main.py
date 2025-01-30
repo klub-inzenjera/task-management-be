@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Union
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
@@ -59,13 +59,13 @@ def get_db():
     finally:
         db.close()
 
-#TODO: Add query parmater to filter tasks by epic_id
-# GET /tasks?epic_id=1
-# epic_id should be optional parameter - if not provided, return all tasks
 @app.get("/tasks", response_model=List[Task], status_code=200)
-def get_tasks(db: Session = Depends(get_db)):
-    tasks = db.query(TaskDB).all()
-    return tasks
+def get_tasks(epic_id: Union[int, None] = None, db: Session = Depends(get_db)):
+    print(epic_id)
+    if epic_id is not None:
+        return db.query(TaskDB).filter(TaskDB.epic_id == epic_id)
+    else:
+        return db.query(TaskDB).all()
 
 @app.get("/tasks/{task_id}", response_model=Task, status_code=200)
 def get_task(task_id: int, db: Session = Depends(get_db)):
@@ -80,9 +80,10 @@ def create_task(task: Task, db: Session = Depends(get_db)):
     if existing_task:
         raise HTTPException(status_code=400, detail="Task ID already exists")
 
-    epic = db.query(EpicDB).filter(EpicDB.id == task.epic_id).first()
-    if not epic:
-        raise HTTPException(status_code=404, detail="Epic not found")
+    if task.epic_id is not None:
+        epic = db.query(EpicDB).filter(EpicDB.id == task.epic_id).first()
+        if not epic:
+            raise HTTPException(status_code=404, detail="Epic not found")
 
     new_task = TaskDB(id=task.id, name=task.name, description=task.description, epic_id=task.epic_id)
     db.add(new_task)
