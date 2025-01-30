@@ -1,9 +1,9 @@
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
-from typing import List
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from typing import List, Optional
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import sessionmaker, Session, relationship
 
 # Database setup
 DATABASE_URL = "sqlite:///./tasks.db"
@@ -17,12 +17,15 @@ class TaskDB(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
+    epic_id = Column(Integer, ForeignKey("epics.id"), nullable=True)
+    epic = relationship("EpicDB", back_populates="tasks")
 
 class EpicDB(Base):
     __tablename__ = "epics"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
+    tasks = relationship("TaskDB", back_populates="epic", cascade="all, delete")
 
 # Create the database tables
 Base.metadata.create_all(bind=engine)
@@ -32,6 +35,7 @@ class Task(BaseModel):
     id: int
     name: str
     description: str
+    epic_id: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -73,7 +77,7 @@ def create_task(task: Task, db: Session = Depends(get_db)):
     if existing_task:
         raise HTTPException(status_code=400, detail="Task ID already exists")
 
-    new_task = TaskDB(id=task.id, name=task.name, description=task.description)
+    new_task = TaskDB(id=task.id, name=task.name, description=task.description, epic_id=task.epic_id)
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
@@ -87,6 +91,7 @@ def update_task(task_id: int, updated_task: Task, db: Session = Depends(get_db))
 
     task.name = updated_task.name
     task.description = updated_task.description
+    task.epic_id = updated_task.epic_id
     db.commit()
     db.refresh(task)
     return task
