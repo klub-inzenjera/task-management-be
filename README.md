@@ -11,6 +11,7 @@
 ```bash
   uvicorn main:app --reload
 ```
+
 ## Git commands
 ```
 git init    --   Inicijalizuje novi Git repozitorijum u trenutnom direktorijumu
