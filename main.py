@@ -64,6 +64,8 @@ def get_tasks(name: Optional[str] = None,
               epic_id: Union[int, None] = None,
               sort_by: str = "id", 
               order: str = "asc",
+              limit: int = 5, 
+              offset: int = 0, 
               db: Session = Depends(get_db)):
     query = db.query(TaskDB)
     
@@ -80,7 +82,8 @@ def get_tasks(name: Optional[str] = None,
     else:
         query = query.order_by(TaskDB.id.desc() if order == "desc" else TaskDB.id.asc())
 
-    tasks = query.all()  # Ovdje se poziva sve zadatke nakon filtriranja
+    total = query.count()
+    tasks = query.offset(offset).limit(limit).all()
     return tasks
 
 @app.get("/tasks/{task_id}", response_model=Task, status_code=200)
