@@ -60,7 +60,11 @@ def get_db():
         db.close()
 
 @app.get("/tasks", response_model=List[Task], status_code=200)
-def get_tasks(name: Optional[str] = None,epic_id: Union[int, None] = None, db: Session = Depends(get_db)):
+def get_tasks(name: Optional[str] = None,
+              epic_id: Union[int, None] = None,
+              sort_by: str = "id", 
+              order: str = "asc",
+              db: Session = Depends(get_db)):
     query = db.query(TaskDB)
     
     # Filtriranje po 'name' ako je prisutno
@@ -69,9 +73,13 @@ def get_tasks(name: Optional[str] = None,epic_id: Union[int, None] = None, db: S
 
     # Filtriranje po 'epic_id' ako je prisutno
     if epic_id is not None:
-        query = query.filter(TaskDB.name.ilike(name))
+        query = query.filter(TaskDB.epic_id == epic_id)
 
-    
+    if sort_by == "name":
+        query = query.order_by(TaskDB.name.desc() if order == "desc" else TaskDB.name.asc())
+    else:
+        query = query.order_by(TaskDB.id.desc() if order == "desc" else TaskDB.id.asc())
+
     tasks = query.all()  # Ovdje se poziva sve zadatke nakon filtriranja
     return tasks
 
