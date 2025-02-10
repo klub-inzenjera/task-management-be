@@ -9,7 +9,7 @@ on:
 env:
   AZURE_CONTAINER_REGISTRY: taskapi
   CONTAINER_APP_NAME: taskapi
-  RESOURCE_GROUP: taskapi_group
+  RESOURCE_GROUP: task-management_group
 
 jobs:
   build-and-deploy:
