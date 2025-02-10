@@ -29,11 +29,9 @@ jobs:
           password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
         
       - name: Build and push image to ACR
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_APP_NAME }}:${{ github.sha }}
-          file: Dockerfile
+        run: |
+          docker build -t ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/backend:${{ github.sha }} .
+          docker push ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/backend:${{ github.sha }}
 
       - name: Azure login
         uses: azure/login@v2
