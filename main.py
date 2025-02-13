@@ -4,6 +4,8 @@ from typing import List, Optional, Union
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # Database setup
 DATABASE_URL = "sqlite:///./tasks.db"
@@ -15,15 +17,16 @@ Base = declarative_base()
 # ORM model
 class TaskDB(Base):
     __tablename__ = "tasks"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
     epic_id = Column(Integer, ForeignKey("epics.id"), nullable=True)
     epic = relationship("EpicDB", back_populates="tasks")
 
+
 class EpicDB(Base):
     __tablename__ = "epics"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
     tasks = relationship("TaskDB", back_populates="epic", cascade="all, delete")
@@ -43,6 +46,24 @@ class Task(BaseModel):
     class Config:
         from_attributes = True
 
+
+class CreateTask(BaseModel):
+    name: str
+    description: str
+    epic_id: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class TaskResponse(BaseModel):
+    tasks: List[Task]
+    totalTasks: int
+
+    class Config:
+        from_attributes = True
+
+
 class Epic(BaseModel):
     id: int
     name: str
@@ -56,6 +77,15 @@ class Epic(BaseModel):
 app = FastAPI()
 
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 # Dependency to get DB session
 def get_db():
     db = SessionLocal()
@@ -65,16 +95,18 @@ def get_db():
         db.close()
 
 
-@app.get("/tasks", response_model=List[Task], status_code=200)
-def get_tasks(name: Optional[str] = None,
-              epic_id: Union[int, None] = None,
-              sort_by: str = "id", 
-              order: str = "asc",
-              limit: int = 5, 
-              offset: int = 0, 
-              db: Session = Depends(get_db)):
+@app.get("/tasks", response_model=TaskResponse, status_code=200)
+def get_tasks(
+    name: Optional[str] = None,
+    epic_id: Union[int, None] = None,
+    sort_by: str = "id",
+    order: str = "asc",
+    limit: int = 5,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+):
     query = db.query(TaskDB)
-    
+
     # Filtriranje po 'name' ako je prisutno
     if name:
         query = query.filter(TaskDB.name.ilike(f"%{name}%"))
@@ -84,13 +116,15 @@ def get_tasks(name: Optional[str] = None,
         query = query.filter(TaskDB.epic_id == epic_id)
 
     if sort_by == "name":
-        query = query.order_by(TaskDB.name.desc() if order == "desc" else TaskDB.name.asc())
+        query = query.order_by(
+            TaskDB.name.desc() if order == "desc" else TaskDB.name.asc()
+        )
     else:
         query = query.order_by(TaskDB.id.desc() if order == "desc" else TaskDB.id.asc())
 
     total = query.count()
     tasks = query.offset(offset).limit(limit).all()
-    return tasks
+    return TaskResponse(tasks=tasks, totalTasks=total)
 
 
 @app.get("/tasks/{task_id}", response_model=Task, status_code=200)
@@ -102,17 +136,15 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/tasks", response_model=Task, status_code=201)
-def create_task(task: Task, db: Session = Depends(get_db)):
-    existing_task = db.query(TaskDB).filter(TaskDB.id == task.id).first()
-    if existing_task:
-        raise HTTPException(status_code=400, detail="Task ID already exists")
-
+def create_task(task: CreateTask, db: Session = Depends(get_db)):
     if task.epic_id is not None:
         epic = db.query(EpicDB).filter(EpicDB.id == task.epic_id).first()
         if not epic:
             raise HTTPException(status_code=404, detail="Epic not found")
 
-    new_task = TaskDB(id=task.id, name=task.name, description=task.description, epic_id=task.epic_id)
+    new_task = TaskDB(
+        name=task.name, description=task.description, epic_id=task.epic_id
+    )
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
@@ -142,11 +174,14 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.delete(task)
     db.commit()
 
-#Epics
+
+# Epics
+
 
 @app.get("/epics", response_model=List[Epic], status_code=200)
 def get_epics(db: Session = Depends(get_db)):
     return db.query(EpicDB).all()
+
 
 @app.get("/epics/{epic_id}", response_model=Epic, status_code=200)
 def get_epic(epic_id: int, db: Session = Depends(get_db)):
@@ -154,6 +189,7 @@ def get_epic(epic_id: int, db: Session = Depends(get_db)):
     if not epic:
         raise HTTPException(status_code=404, detail="Epic not found")
     return epic
+
 
 @app.post("/epics", response_model=Epic, status_code=201)
 def create_epic(epic: Epic, db: Session = Depends(get_db)):
@@ -164,6 +200,7 @@ def create_epic(epic: Epic, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_epic)
     return new_epic
+
 
 @app.put("/epics/{epic_id}", response_model=Epic, status_code=200)
 def update_epic(epic_id: int, updated_epic: Epic, db: Session = Depends(get_db)):
@@ -176,6 +213,7 @@ def update_epic(epic_id: int, updated_epic: Epic, db: Session = Depends(get_db))
     db.refresh(epic)
     return epic
 
+
 @app.delete("/epics/{epic_id}", status_code=204)
 def delete_epic(epic_id: int, db: Session = Depends(get_db)):
     epic = db.query(EpicDB).filter(EpicDB.id == epic_id).first()
@@ -183,4 +221,3 @@ def delete_epic(epic_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Epic not found")
     db.delete(epic)
     db.commit()
-
