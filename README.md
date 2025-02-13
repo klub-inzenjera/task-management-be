@@ -19,6 +19,7 @@ git add <ime_fajla>
 git commit -m "Poruka"
 git push
 git clone <repo_URL>
+git fetch --all -p
 git pull origin <branch>  --   Preuzima najnovije promene iz udaljenog repozitorijuma i spaja ih sa lokalnim
 git branch  --  Prikazuje listu svih grana u repozitorijumu
 git branch <ime_grane>  --  Kreira novu granu
