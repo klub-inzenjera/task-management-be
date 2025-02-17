@@ -79,10 +79,8 @@ jobs:
 
       - name: Deploy to Azure Container Apps
         run: |
-          az containerapp up \
+          az containerapp update \
             --name task-management-be \
             --resource-group klub-inzenjera \
             --image ghcr.io/${{ github.repository_owner }}/fastapi-app:latest \
             --ingress external
-
-
