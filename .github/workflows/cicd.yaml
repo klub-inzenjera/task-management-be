@@ -83,4 +83,3 @@ jobs:
             --name task-management-be \
             --resource-group klub-inzenjera \
             --image ghcr.io/${{ github.repository_owner }}/fastapi-app:latest \
-            --ingress external
