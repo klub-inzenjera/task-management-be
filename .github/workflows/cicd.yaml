@@ -62,6 +62,7 @@ jobs:
   
   azure-login-and-deploy:
     runs-on: ubuntu-latest
+    environment: CICD
 
     steps:
       - name: Checkout Repository
