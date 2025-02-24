@@ -63,6 +63,7 @@ jobs:
   azure-login-and-deploy:
     runs-on: ubuntu-latest
     needs: docker-build-and-push
+    environment: CICD
 
     steps:
       - name: Checkout Repository
